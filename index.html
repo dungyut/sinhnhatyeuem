@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Happy Birthday!</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Comic Sans MS', cursive;
+      background: linear-gradient(white, #ffe6f0);
+      overflow: hidden;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      z-index: 1;
+      position: relative;
+    }
+    .message {
+      font-size: 28px;
+      color: #d6336c;
+      border: 2px solid #fff;
+      padding: 20px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 10px #ff99c8;
+      max-width: 80%;
+    }
+    .button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      background: #ff66b3;
+      color: white;
+      cursor: pointer;
+    }
+    #cake {
+      width: 200px;
+      display: none;
+      cursor: pointer;
+    }
+    #person {
+      width: 300px;
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 10px solid #fff;
+      border-radius: 20px;
+      box-shadow: 0 0 30px #ff99c8;
+      z-index: 10;
+    }
+    #rain-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .raindrop {
+      position: absolute;
+      font-size: 20px;
+      font-weight: bold;
+      animation: fall linear infinite;
+      color: #fff;
+      text-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
+    }
+    @keyframes fall {
+      to {
+        transform: translateY(110vh);
+        opacity: 0;
+      }
+    }
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <audio id="bgMusic" src="sn.mp3" preload="auto" loop></audio>
+
+  <div id="app">
+    <div class="message" id="message">Bắt đầu lời chúc nhé~</div>
+    <button class="button" id="next">Tiếp theo</button>
+    <button class="button" id="cakeBtn" style="display:none;">Bánh kem</button>
+    <img src="cake.png" id="cake" />
+    <img src="person.png" id="person" />
+  </div>
+
+  <canvas id="confetti"></canvas>
+  <div id="rain-container"></div>
+
+  <script>
+    const messages = [
+      "Chúc mừng sinh nhật cậu, người đặc biệt nhất 💖",
+      "Gửi cậu, người đặc biệt nhất trong ngày hôm nay..",
+      "cả thế giới dường như chậm đi 1 nhịp cõ lẽ chỉ vì cậu.",
+      "Cậu là người khách hàng đầu tiên mà tớ đã dành toàn bộ mọi sức mạnh nội tâm để lập trình ra web này",
+      "vậy nên có lẽ vẫn còn non nớt, tớ vẫn mong cậu có một trải ngiệm tốt cùng nó.",
+      "Chúc cậu sẽ thật vui vẻ khoác lên mình một phong thái rực rỡ nhất..",
+      "vì cậu là người tuyệt nhất ngày hôm nay.",
+      "dungyut",
+      "Hy vọng tuổi mới sẽ mang lại cho cậu thật nhiều niềm vui và bất ngờ!",
+      "Sẵn sàng chưa? Nhấn vào bánh kem nha!"
+    ];
+
+    let current = 0;
+    const messageEl = document.getElementById("message");
+    const nextBtn = document.getElementById("next");
+    const cakeBtn = document.getElementById("cakeBtn");
+    const cake = document.getElementById("cake");
+    const person = document.getElementById("person");
+    const confettiCanvas = document.getElementById("confetti");
+    const rainContainer = document.getElementById("rain-container");
+    const audio = document.getElementById("bgMusic");
+
+    nextBtn.addEventListener("click", () => {
+      if (current === 0) audio.play();
+      current++;
+      if (current < messages.length) {
+        messageEl.textContent = messages[current];
+      } else {
+        nextBtn.style.display = "none";
+        cakeBtn.style.display = "inline-block";
+      }
+    });
+
+    cakeBtn.addEventListener("click", () => {
+      // Ẩn lời chúc và nút
+      messageEl.style.display = "none";
+      cakeBtn.style.display = "none";
+      cake.style.display = "block";
+    });
+
+    cake.addEventListener("click", () => {
+      // Ẩn bánh kem
+      cake.style.display = "none";
+
+      // Hiệu ứng confetti + person + mưa chữ
+      showConfetti();
+      person.style.display = "block";
+      startRain();
+    });
+
+    // Confetti
+    const ctx = confettiCanvas.getContext("2d");
+    let confetti = [];
+    function showConfetti() {
+      confetti = Array.from({ length: 300 }, () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * -window.innerHeight,
+        r: Math.random() * 6 + 4,
+        c: `hsl(${Math.random() * 360}, 100%, 70%)`,
+        v: Math.random() * 3 + 2
+      }));
+      requestAnimationFrame(updateConfetti);
+    }
+    function updateConfetti() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confetti.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+        ctx.fillStyle = p.c;
+        ctx.fill();
+        p.y += p.v;
+        if (p.y > window.innerHeight) p.y = -10;
+      });
+      requestAnimationFrame(updateConfetti);
+    }
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    // Mưa chữ
+    const rainChars = ["happy", "snvv", "tuổi mới xinh mãi", "🎉", "🎂"];
+    function startRain() {
+      setInterval(() => {
+        const drop = document.createElement("div");
+        drop.className = "raindrop";
+        drop.textContent = rainChars[Math.floor(Math.random() * rainChars.length)];
+        drop.style.left = `${Math.random() * 100}vw`;
+        drop.style.top = `-2vh`;
+        drop.style.fontSize = `${Math.random() * 10 + 18}px`;
+        drop.style.animationDuration = `${Math.random() * 3 + 4}s`;
+        drop.style.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
+        rainContainer.appendChild(drop);
+        setTimeout(() => drop.remove(), 7000);
+      }, 150);
+    }
+  </script>
+</body>
+</html>
